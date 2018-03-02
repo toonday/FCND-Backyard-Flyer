@@ -27,34 +27,43 @@ class BackyardFlyer(Drone):
         self.all_waypoints = []
         self.in_mission = True
         self.check_state = {}
+        # please view `ned_plot.jpg` to see a sample of the ned plot
+        # To enable NED plot
+        # run `python -m visdom.server` on a separate command prompt from the project root directory
+        # copy and paste the displayed url in a web browser to view the plots
+        # set self.display_ned_plot to True
+        # run `python backyard_flyer.py`
+        self.display_ned_plot = False
 
-        # setup NED plots
-        self.v = visdom.Visdom()
-        assert self.v.check_connection()
+        if self.display_ned_plot:
+            # setup NED plots
+            self.v = visdom.Visdom()
+            assert self.v.check_connection()
 
-        # Plot NE
-        ne = np.array([self.local_position[0], self.local_position[1]]).reshape(-1, 2)
-        self.ne_plot = self.v.scatter(ne, opts=dict(
-            title="Local position (north, east)", 
-            xlabel='North', 
-            ylabel='East'
-        ))
+            # Plot NE
+            ne = np.array([self.local_position[0], self.local_position[1]]).reshape(-1, 2)
+            self.ne_plot = self.v.scatter(ne, opts=dict(
+                title="Local position (north, east)", 
+                xlabel='North', 
+                ylabel='East'
+            ))
 
-        # Plot D
-        d = np.array([self.local_position[2]])
-        self.t = 1
-        self.d_plot = self.v.line(d, X=np.array([self.t]), opts=dict(
-            title="Altitude (meters)", 
-            xlabel='Timestep', 
-            ylabel='Down'
-        ))
+            # Plot D
+            d = np.array([self.local_position[2]])
+            self.t = 1
+            self.d_plot = self.v.line(d, X=np.array([self.t]), opts=dict(
+                title="Altitude (meters)", 
+                xlabel='Timestep', 
+                ylabel='Down'
+            ))
 
         # initial state
         self.flight_state = States.MANUAL
 
         # TODO: Register all your callbacks here
-        self.register_callback(MsgID.LOCAL_POSITION, self.update_ne_plot)
-        self.register_callback(MsgID.LOCAL_POSITION, self.update_d_plot)
+        if self.display_ned_plot:
+            self.register_callback(MsgID.LOCAL_POSITION, self.update_ne_plot)
+            self.register_callback(MsgID.LOCAL_POSITION, self.update_d_plot)
         self.register_callback(MsgID.LOCAL_POSITION, self.local_position_callback)
         self.register_callback(MsgID.LOCAL_VELOCITY, self.velocity_callback)
         self.register_callback(MsgID.STATE, self.state_callback)
